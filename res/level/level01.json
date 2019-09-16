@@ -1,0 +1,14 @@
+{
+    "name": "Demo 01",
+    "background": "res/img/bg01.png",
+    "music": "",
+    "objects": [
+        {
+            "src": "res/img/Bunny.png",
+            "x": 647,
+            "y": 245,
+            "visible": true,
+            "onClick": "self.setVisible(false);"
+        }
+    ]
+}
