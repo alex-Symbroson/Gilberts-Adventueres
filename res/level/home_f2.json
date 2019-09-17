@@ -1,0 +1,24 @@
+{
+    "name": "home_f2",
+    "music": "",
+    "objects": [
+        {
+            "sprite": "player",
+            "x": 0.53125,
+            "y": 0.4444444444444444,
+            "script": "text('This is you.')"
+        },
+        {
+            "name": "stairs",
+            "x": 0.71875,
+            "y": 0.2222222222222222,
+            "script": "warp(home_f1)"
+        },
+        {
+            "name": "snes",
+            "x": 0.46875,
+            "y": 0.6111111111111112,
+            "script": "text('That's a SNES! Do people your age even know what that is anymore?')"
+        }
+    ]
+}

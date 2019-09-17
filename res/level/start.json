@@ -1,0 +1,13 @@
+{
+    "name": "start",
+    "music": "",
+    "objects": [
+        {
+            "name": "title",
+            "sprite": "title",
+            "x": 0.5,
+            "y": 0.5,
+            "script": "warp(home_f2)"
+        }
+    ]
+}
