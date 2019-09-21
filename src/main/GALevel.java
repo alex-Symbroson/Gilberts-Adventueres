@@ -23,6 +23,7 @@ public class GALevel
         this.name = name;
         this.state_count = state_count;
         this.backgrounds = backgrounds;
+
         objects = new HashMap<>();
 
         state = new RangedIntegerProperty(0, state_count);
@@ -31,6 +32,11 @@ public class GALevel
     public void addObject(GAObject object)
     {
         objects.put(object.name, object);
+    }
+
+    public GAObject getObject(String name)
+    {
+        return objects.get(name);
     }
 
     public Image getBackground()

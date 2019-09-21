@@ -5,18 +5,22 @@
         {
             "name": "mom",
             "states": 2,
-            "x": 0.59375,
-            "y": 0.5555555555555556,
-            "script": [
-                "_._.state = 1 text('All boys leave home someday. It said so on YOUR FACE!') _._.state = 0",
-                ""
-            ]
+            "x": 0.5625,
+            "y": 0.4722222222222222,
+            "script": "_._.state = 1 - _._.state text('All boys leave home someday. It said so on YOUR FACE!')"
         },
         {
             "name": "stairs",
-            "x": 0.71875,
-            "y": 0.2222222222222222,
+            "x": 0.6875,
+            "y": 0.1666666666666667,
             "script": "warp(home_f2)"
+        },
+        {
+            "name": "player",
+            "sprite": "player",
+            "x": 0.5625,
+            "y": 0.3333333333333333,
+            "script": "text('This is you.')"
         }
     ]
 }

@@ -9,7 +9,7 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox xmlns="http://javafx.com/javafx/12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.Controller">
+<VBox xmlns="http://javafx.com/javafx/12" xmlns:fx="http://javafx.com/fxml/1">
    <stylesheets>
      <URL value="@main.css" />
    </stylesheets>
@@ -19,11 +19,10 @@
           <Menu mnemonicParsing="false" text="File">
              <items>
                <MenuItem mnemonicParsing="false" text="New" accelerator="Shortcut+N" />
-               <MenuItem mnemonicParsing="false" onAction="#openFile" text="Open..." accelerator="Shortcut+O" />
+               <MenuItem mnemonicParsing="false" onAction="#open" text="Open..." accelerator="Shortcut+O" />
                <SeparatorMenuItem mnemonicParsing="false" />
-               <MenuItem mnemonicParsing="false" text="Save" accelerator="Shortcut+S" />
-               <MenuItem mnemonicParsing="false" text="Save As..." />
-               <MenuItem mnemonicParsing="false" text="Close" />
+               <MenuItem mnemonicParsing="false" text="Save" onAction="#save" accelerator="Shortcut+S" />
+               <MenuItem mnemonicParsing="false" text="Save As..." onAction="#saveAs" />
                <SeparatorMenuItem mnemonicParsing="false" />
                <Menu fx:id="prefsMenu" mnemonicParsing="false" text="Preferences..." />
                <SeparatorMenuItem mnemonicParsing="false" />

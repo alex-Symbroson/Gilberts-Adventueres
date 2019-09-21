@@ -1,12 +1,13 @@
 {
     "name": "start",
+    "background": "title",
     "music": "",
     "objects": [
         {
             "name": "title",
             "sprite": "title",
-            "x": 0.5,
-            "y": 0.5,
+            "x": 0.0,
+            "y": 0.0,
             "script": "warp(home_f2)"
         }
     ]
