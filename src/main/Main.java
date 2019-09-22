@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,9 +30,11 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import script.Script;
 import script.ScriptEvaluator;
@@ -75,13 +78,13 @@ public class Main extends Application
             script.add(Token.EOF);
         }
 
+        logger.info(script.toString());
+
         if (!script.testValid())
         {
             controller.setStatus("Script Error");
             throw new ScriptException("Script lexed from \"" + script_string + "\" not valid");
         }
-
-        logger.info(script.toString());
 
         return script;
     }
@@ -229,8 +232,16 @@ public class Main extends Application
         return levels.get(level_name);
     }
 
+    private static final Background NULL_BG = new Background(new BackgroundFill(Color.BLACK, null, null));
+
     private void setBackground(Image bg_img)
     {
+        if (bg_img == null)
+        {
+            game_pane.setBackground(NULL_BG);
+            return;
+        }
+
         BackgroundImage bg = new BackgroundImage(bg_img, null, null, null,
                 new BackgroundSize(1.0, 1.0, true, true, true, true));
         // game_pane.setMaxWidth(bg_img.getWidth());
@@ -308,9 +319,11 @@ public class Main extends Application
             return;
         }
 
+        setBackground(null);
+
+        levels.clear();
         // TODO remember to load items
-        enter(data.getString("_"));
-        Set<String> key_set = data.keySet();
+        Set<String> key_set = new HashSet<>(data.keySet());
         key_set.remove("_");
         for (String key : key_set)
         {
@@ -328,6 +341,8 @@ public class Main extends Application
                 ob.setState(ia.getInt(1));
             }
         }
+
+        enter(data.getString("_"));
     }
 
     @Override

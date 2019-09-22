@@ -52,12 +52,8 @@ public class Script extends ArrayList<Token>
             // ( '...' )
             if (t == TokenType.STRING && (i == 0 || get(i - 1).type != TokenType.LPAREN || tx != TokenType.RPAREN))
                 return false;
-            // var IDENTIFIER =
-            if (t == TokenType.VAR
-                    && (i == size() - 2 || tx != TokenType.IDENTIFIER || get(i + 2).type != TokenType.ASSIGN))
-                return false;
-            // IDENTIFIER . ; IDENTIFIER )
-            if (t == TokenType.IDENTIFIER && tx != TokenType.PERIOD && tx != TokenType.RPAREN) return false;
+            // IDENTIFIER = ; ... BUILTIN_VAR =
+            if (tx == TokenType.ASSIGN && t != TokenType.BUILTIN_VAR && t != TokenType.IDENTIFIER) return false;
             // . IDENTIFIER ; . visible ; . state
             if (t == TokenType.PERIOD && tx != TokenType.IDENTIFIER && tx != TokenType.BUILTIN_VAR) return false;
             // things after OP
@@ -74,11 +70,4 @@ public class Script extends ArrayList<Token>
         evaluator.setCurrentObject(object);
         evaluator.eval(this);
     }
-
-    /*
-     * Script subscript(int fromIndex, int toIndex) { Script sub = new Script(evaluator);
-     * sub.addAll(this.subList(fromIndex, toIndex)); sub.add(Token.EOF);
-     * 
-     * return sub; }
-     */
 }

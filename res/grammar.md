@@ -16,6 +16,7 @@
         | ("has" | "take") , "(" , IDENTIFIER , ")" ;
         
     IDENTIFIER = [_$a-zA-Z][_$0-9a-zA-Z]*
+        "_" and "state" are reserved and cannot be used as identifiers
     STRING = '[^\n]*'
     INT = 0 | [1-9][0-9]*
     BIN_OP = [+-&|^*/%<>] | [=!<>]=

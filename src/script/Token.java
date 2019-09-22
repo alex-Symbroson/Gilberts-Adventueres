@@ -42,7 +42,7 @@ public class Token
         BUILTIN_VAR, /* visible, state */
         BUILTIN_FUNC, /* give, has, take, text, warp */
         ASSIGN, /* '=' */
-        VAR, IF, ELSE, /* keywords */
+        IF, ELSE, /* keywords */
         OP, /* + - * / % & | ^ ~ == < <= > >= != */
         LPAREN, RPAREN, LBRACE, RBRACE, EOF
     }

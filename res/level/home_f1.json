@@ -21,6 +21,13 @@
             "x": 0.5625,
             "y": 0.3333333333333333,
             "script": "text('This is you.')"
+        },
+        {
+            "name": "exit",
+            "sprite": "exit",
+            "x": 0.375,
+            "y": 0.8333333333333333,
+            "script": "warp(calc)"
         }
     ]
 }

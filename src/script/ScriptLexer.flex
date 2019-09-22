@@ -3,6 +3,8 @@
  */
 package script;
 
+import script.Token.TokenType;
+
 %%
 
 %public
@@ -27,7 +29,7 @@ package script;
         return new Token(type, yychar, yytext());
     }
     
-    private Token token(TokenType type, String value)
+    private Token token(TokenType type, Object value)
     {
         return new Token(type, yychar, value);
     }
@@ -35,7 +37,6 @@ package script;
 
 /* main character classes */
 LineTerminator = \r|\n|\r\n
-InputCharacter = [^\r\n]
 
 Whitespace = {LineTerminator} | [ \t\f]+
 
@@ -55,7 +56,6 @@ IntLiteral = 0 | [1-9][0-9]*
 
   /* keywords */
   
-  "var"     { return token(TokenType.VAR); }
   "if"      { return token(TokenType.IF); }
   "else"    { return token(TokenType.ELSE); }
 
@@ -89,7 +89,7 @@ IntLiteral = 0 | [1-9][0-9]*
   "~" |
   "|" | "&" | "^" |
   "==" | "!=" | "<" | "<=" | ">" | ">="
-                { return text_token(TokenType.OPERATOR); }
+                { return text_token(TokenType.OP); }
 
   {Identifier}  { return text_token(TokenType.IDENTIFIER); }
   
@@ -108,5 +108,5 @@ IntLiteral = 0 | [1-9][0-9]*
 
 
 /* error fallback */
-.|\n                             {  }
+[^]                              {  }
 <<EOF>>                          { return Token.EOF; }

@@ -121,12 +121,12 @@ public class Controller implements Initializable
         File selectedFile = fileChooser.showOpenDialog(stage);
 
         if (selectedFile != null)
+        {
             logger.info("open file " + selectedFile);
-        else
+            open.accept(selectedFile);
+            current = selectedFile;
+        } else
             logger.info("open file aborted.");
-
-        open.accept(selectedFile);
-        current = selectedFile;
     }
 
     @FXML
@@ -138,10 +138,16 @@ public class Controller implements Initializable
             fchoose.setTitle("Save adventüres");
             fchoose.setInitialDirectory(new File(prefs.get("Saves_Dirf", "")));
             fchoose.getExtensionFilters().add(new ExtensionFilter("Gilbert's Adventüres save file", "*.ga"));
+
             current = fchoose.showSaveDialog(stage);
         }
 
-        save.accept(current);
+        if (current != null)
+        {
+            logger.info("save to file " + current);
+            save.accept(current);
+        } else
+            logger.info("save to file aborted.");
     }
 
     @FXML
@@ -153,7 +159,12 @@ public class Controller implements Initializable
         fchoose.getExtensionFilters().add(new ExtensionFilter("Gilbert's Adventüres save file", "*.ga"));
         current = fchoose.showSaveDialog(stage);
 
-        save.accept(current);
+        if (current != null)
+        {
+            logger.info("save to file " + current);
+            save.accept(current);
+        } else
+            logger.info("save to file aborted.");
     }
 
     // confirm and quit app

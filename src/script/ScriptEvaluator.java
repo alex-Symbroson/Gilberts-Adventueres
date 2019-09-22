@@ -89,7 +89,7 @@ public class ScriptEvaluator
             throw new ScriptException("Not a valid statement at " + t.pos);
     }
 
-    private static Pattern INSERT = Pattern.compile("[^\\\\]%(.*?)%");
+    private static Pattern INSERT = Pattern.compile("(^|[^\\\\])%(.*?)%");
 
     // evaluates statement at current script position
     // will end with script pointer directly after statement
@@ -115,7 +115,7 @@ public class ScriptEvaluator
                 String text = arg.value.toString();
                 Matcher m = INSERT.matcher(text);
                 text = m.replaceAll(
-                        res -> Main.isValidIdentifier(res.group(1)) ? Integer.toString(context.get(res.group(1)))
+                        res -> Main.isValidIdentifier(res.group(2)) ? Integer.toString(context.get(res.group(2)))
                                 : res.group());
                 write_text.accept(text);
             }

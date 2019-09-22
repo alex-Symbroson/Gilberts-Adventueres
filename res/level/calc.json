@@ -1,0 +1,109 @@
+{
+    "name": "calc",
+    "background": "title",
+    "music": "",
+    "objects": [
+        {
+            "name": "x1",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.375,
+            "y": 0.125,
+            "script": "_._.state = 1 - _._.state"
+        },
+        {
+            "name": "x0",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.5,
+            "y": 0.125,
+            "script": "_._.state = 1 - _._.state"
+        },
+        {
+            "name": "y1",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.375,
+            "y": 0.375,
+            "script": "_._.state = 1 - _._.state"
+        },
+        {
+            "name": "y0",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.5,
+            "y": 0.375,
+            "script": "_._.state = 1 - _._.state"
+        },
+        {
+            "name": "calc",
+            "sprite": "player",
+            "x": 0.8,
+            "y": 0.5,
+            "script": "x = 2*_.x1.state + _.x0.state y = 2*_.y1.state + _.y0.state z = x * y _.z3.state = (z&8)/8 _.z2.state = (z&4)/4 _.z1.state = (z&2)/2 _.z0.state = z&1"
+        },
+        {
+            "name": "exit",
+            "sprite": "exit",
+            "x": 0.8,
+            "y": 0.75,
+            "script": "warp(home_f1)"
+        },
+        {
+            "name": "z3",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.125,
+            "y": 0.75,
+            "script": ""
+        },
+        {
+            "name": "z2",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.25,
+            "y": 0.75,
+            "script": ""
+        },
+        {
+            "name": "z1",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.375,
+            "y": 0.75,
+            "script": ""
+        },
+        {
+            "name": "z0",
+            "states": 2,
+            "sprite": [
+                "home_f1.mom_1",
+                "home_f1.mom_2"
+            ],
+            "x": 0.5,
+            "y": 0.75,
+            "script": ""
+        }
+    ]
+}
