@@ -3,9 +3,9 @@ package main;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,7 +53,7 @@ public class Main extends Application
     private InvalidationListener level_listener;
     private Map<String, GALevel> levels = new HashMap<>();
 
-    private Path res_levels, res_img;
+    private URL res_levels, res_img;
     private ScriptLexer lexer;
     private ScriptEvaluator eval;
 
@@ -116,7 +116,7 @@ public class Main extends Application
         for (String file : sprite_list)
             try
             {
-                sprite_list_img.add(Loader.loadSprite(res_img.resolve(file + ".png")));
+                sprite_list_img.add(Loader.loadSprite(new URL(res_img, file + ".png")));
             } catch (IOException e)
             {
                 e.printStackTrace();
@@ -153,13 +153,20 @@ public class Main extends Application
     {
         if (levels.containsKey(level_name)) return 0;
 
-        Path level_file = res_levels.resolve(level_name + ".json");
-        if (!Files.exists(level_file) || !Files.isReadable(level_file)) return 1;
+        URL level_file = null;
+        try
+        {
+            level_file = new URL(res_levels, level_name + ".json");
+        } catch (MalformedURLException e)
+        {
+            e.printStackTrace();
+        }
 
         JSONObject json;
         try
         {
-            json = new JSONObject(Files.readString(level_file));
+            String src = new String(level_file.openStream().readAllBytes());
+            json = new JSONObject(src);
         } catch (IOException e)
         {
             e.printStackTrace();
@@ -194,7 +201,7 @@ public class Main extends Application
             {
                 // bg_list_img.add(Loader.loadBackground(res_img.resolve(bg + ".png"), game_pane.getWidth(),
                 // game_pane.getHeight()));
-                bg_list_img.add(Loader.loadSprite(res_img.resolve(bg + ".png")));
+                bg_list_img.add(Loader.loadSprite(new URL(res_img, bg + ".png")));
             } catch (IOException e)
             {
                 e.printStackTrace();
@@ -336,8 +343,8 @@ public class Main extends Application
         put_def.accept("Show_Exit_Dialogb", "true");
         put_def.accept("Saves_Dirf", System.getProperty("user.home"));
 
-        res_levels = Paths.get("res/level");
-        res_img = Paths.get("res/img");
+        res_levels = getClass().getResource("/level/");
+        res_img = getClass().getResource("/img/");
 
         lexer = new ScriptLexer(null);
         eval = new ScriptEvaluator(this::get_level, this::enter, System.out::println);
@@ -355,14 +362,13 @@ public class Main extends Application
         controller.setPrefs(prefs);
         loader.setController(controller);
         Parent root = loader.load();
-
-        // controller = (Controller) loader.getController();
+        root.getStylesheets().add(getClass().getResource("main.css").toString());
 
         game_pane = controller.game;
 
         primaryStage.setTitle("Gilbert's Adventüres");
         setUserAgentStylesheet(STYLESHEET_MODENA);
-        // primaryStage.setResizable(false);
+        primaryStage.setResizable(false);
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
