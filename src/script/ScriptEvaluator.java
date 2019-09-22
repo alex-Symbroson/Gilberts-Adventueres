@@ -1,6 +1,7 @@
 package script;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,8 +60,7 @@ public class ScriptEvaluator
         else if (type == TokenType.IDENTIFIER)
         {
             --pointer;
-            // TODO skip properly
-            setVar(null);
+            skipVar();
             assertType(next(), TokenType.ASSIGN);
             skipExpr();
         } else if (type == TokenType.BUILTIN_FUNC)
@@ -143,9 +143,62 @@ public class ScriptEvaluator
             throw new ScriptException("Not a valid statement at " + t.pos);
     }
 
+    // skip == < <= > >= !=
     public void skipExpr()
     {
-        return;
+        skipExprSum();
+        Token t = get();
+        if (t.type == TokenType.OP)
+        {
+            int index = "== < <= > >= !=".indexOf(t.value.toString());
+            if (index == -1) throw new ScriptException("Not a valid operator at " + t.pos);
+            next();
+            skipExprSum();
+        }
+    }
+
+    // skip + - & | ^
+    private void skipExprSum()
+    {
+        skipExprProd();
+        Token t;
+        while ((t = get()).type == TokenType.OP && "+-&|^".indexOf(t.value.toString()) != -1)
+        {
+            next();
+            skipExprProd();
+        }
+    }
+
+    // skip * / %
+    private void skipExprProd()
+    {
+        skipExprFactor();
+        Token t;
+        while ((t = get()).type == TokenType.OP && "*/%".indexOf(t.value.toString()) != -1)
+        {
+            next();
+            skipExprFactor();
+        }
+    }
+
+    private void skipExprFactor()
+    {
+        Token t;
+        while ((t = get()).type == TokenType.OP && "-".equals(t.value) || "~".equals(t.value))
+            next();
+        t = get();
+        if (t.type == TokenType.LPAREN)
+        {
+            next();
+            skipExpr();
+            assertType(next(), TokenType.RPAREN);
+        } else if (t.type == TokenType.INT)
+            next();
+        else if (t.type == TokenType.IDENTIFIER)
+            skipVar();
+        // TODO has, take
+        else
+            throw new ScriptException("Illegal token for factor at " + t.pos);
     }
 
     // eval == < <= > >= !=
@@ -248,20 +301,48 @@ public class ScriptEvaluator
             next();
             pre_op.add("-".equals(t.value));
         }
+        int n;
         t = get();
         if (t.type == TokenType.LPAREN)
         {
             next();
-            int n = evalExpr(context);
+            n = evalExpr(context);
             assertType(next(), TokenType.RPAREN);
-            return n;
         } else if (t.type == TokenType.INT)
         {
             next();
-            return (Integer) t.value;
-        } else if (t.type == TokenType.IDENTIFIER) return getVar(context);
+            n = (Integer) t.value;
+        } else if (t.type == TokenType.IDENTIFIER)
+            n = getVar(context);
         // TODO has, take
-        throw new ScriptException("Illegal token for factor at " + t.pos);
+        else
+            throw new ScriptException("Illegal token for factor at " + t.pos);
+
+        Collections.reverse(pre_op);
+        for (Boolean b : pre_op)
+        {
+            if (b)
+                n = -n;
+            else
+                n = ~n;
+        }
+        return n;
+    }
+
+    private void skipVar()
+    {
+        assertType(next(), TokenType.IDENTIFIER);
+        if (get().type == TokenType.PERIOD)
+        {
+            next();
+            Token t = next();
+            if (t.type == TokenType.IDENTIFIER)
+            {
+                assertType(next(), TokenType.PERIOD);
+                assertType(next(), TokenType.BUILTIN_VAR);
+            } else if (t.type != TokenType.BUILTIN_VAR || !"state".equals(t.value));
+            throw new ScriptException("Not a valid token after period at " + t.pos);
+        }
     }
 
     private int getVar(Map<String, Integer> context)
