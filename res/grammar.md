@@ -3,11 +3,13 @@
         | var , "=" , expr
         | ( "give' | "take" | "warp" ) , "(" , IDENTIFIER , ")"
         | "text" , "(" , STRING , ")"
-        | if_stmt ;
+        | if_stmt
+		| while_stmt ;
     var = IDENTIFIER
         | IDENTIFIER , "." , IDENTIFIER , "." "visible"
         | IDENTIFIER , "." , [ IDENTIFIER , "." ] , "state" ;
     if_stmt = "if" , "(" , expr , ")" , statement , [ "else" , statement ] ;
+	while_stmt = "while" , "(" , expr , ")" , statement ;
     expr = INT
         | var
         | ("-" | "~" | "!") , expr

@@ -47,10 +47,10 @@ public class Token
         BUILTIN_VAR, /* visible, state */
         BUILTIN_FUNC, /* give, has, take, text, warp */
         ASSIGN, /* '=' */
-        IF, ELSE, /* keywords */
+        IF, ELSE, WHILE, /* keywords */
         OP, /* + - * / % & | ^ ~ == < <= > >= != */
         LPAREN, RPAREN, LBRACE, RBRACE, EOF;
 
-        public static String[] reserved = { "else", "give", "has", "if", "state", "take", "text", "visible", "warp" };
+        public static String[] reserved = { "else", "give", "has", "if", "state", "take", "text", "visible", "warp", "while" };
     }
 }

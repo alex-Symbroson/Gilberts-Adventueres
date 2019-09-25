@@ -228,7 +228,11 @@ public class Main extends Application
     protected GALevel get_level(String level_name)
     {
         int err = load_level(level_name);
-        if (err != 0) controller.setStatus("Error " + err);
+        if (err != 0)
+        {
+            System.err.println("Error " + err);
+            controller.setStatus("Error " + err);
+        }
 
         return levels.get(level_name);
     }
@@ -410,7 +414,7 @@ public class Main extends Application
 
     public static boolean isValidIdentifier(String s)
     {
-        if (s == null || s.isEmpty() || s.equals("_") || Arrays.binarySearch(TokenType.reserved, s) < 0) return false;
+        if (s == null || s.isEmpty() || s.equals("_") || Arrays.binarySearch(TokenType.reserved, s) >= 0) return false;
 
         if (!Character.isJavaIdentifierStart(s.charAt(0))) return false;
         for (char c : s.toCharArray())

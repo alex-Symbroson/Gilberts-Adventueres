@@ -85,6 +85,12 @@ public class ScriptEvaluator
                 next();
                 skipStatement();
             }
+        } else if (type == TokenType.WHILE)
+        {
+            assertType(next(), TokenType.LPAREN);
+            skipExpr();
+            assertType(next(), TokenType.RPAREN);
+            skipStatement();
         } else
             throw new ScriptException("Not a valid statement at " + t.pos);
     }
@@ -139,6 +145,21 @@ public class ScriptEvaluator
                 else
                     skipStatement();
             }
+        } else if (type == TokenType.WHILE)
+        {
+            assertType(next(), TokenType.LPAREN);
+            int test_ptr = pointer;
+            boolean test = evalExpr(context) != 0;
+            assertType(next(), TokenType.RPAREN);
+
+            while (test)
+            {
+                evalStatement(context);
+                pointer = test_ptr;
+                test = evalExpr(context) != 0;
+                next();
+            }
+            skipStatement();
         } else
             throw new ScriptException("Not a valid statement at " + t.pos);
     }
