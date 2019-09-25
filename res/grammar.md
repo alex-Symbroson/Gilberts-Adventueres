@@ -10,7 +10,7 @@
     if_stmt = "if" , "(" , expr , ")" , statement , [ "else" , statement ] ;
     expr = INT
         | var
-        | ("-" | "~") , expr
+        | ("-" | "~" | "!") , expr
         | "(" , expr , ")"
         | expr , BIN_OP , expr
         | ("has" | "take") , "(" , IDENTIFIER , ")" ;

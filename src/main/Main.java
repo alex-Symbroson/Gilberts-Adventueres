@@ -8,6 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -409,7 +410,7 @@ public class Main extends Application
 
     public static boolean isValidIdentifier(String s)
     {
-        if (s == null || s.isEmpty() || s.equals("_") || s.equals("state")) return false;
+        if (s == null || s.isEmpty() || s.equals("_") || Arrays.binarySearch(TokenType.reserved, s) < 0) return false;
 
         if (!Character.isJavaIdentifierStart(s.charAt(0))) return false;
         for (char c : s.toCharArray())

@@ -184,7 +184,7 @@ public class ScriptEvaluator
     private void skipExprFactor()
     {
         Token t;
-        while ((t = get()).type == TokenType.OP && "-".equals(t.value) || "~".equals(t.value))
+        while ((t = get()).type == TokenType.OP && "-".equals(t.value) || "~".equals(t.value) || "!".equals(t.value))
             next();
         t = get();
         if (t.type == TokenType.LPAREN)
@@ -294,12 +294,12 @@ public class ScriptEvaluator
 
     private int evalExprFactor(Map<String, Integer> context)
     {
-        List<Boolean> pre_op = new ArrayList<>();
+        List<Character> pre_op = new ArrayList<>();
         Token t;
-        while ((t = get()).type == TokenType.OP && "-".equals(t.value) || "~".equals(t.value))
+        while ((t = get()).type == TokenType.OP && "-".equals(t.value) || "~".equals(t.value) || "!".equals(t.value))
         {
             next();
-            pre_op.add("-".equals(t.value));
+            pre_op.add(((String) t.value).charAt(0));
         }
         int n;
         t = get();
@@ -319,12 +319,14 @@ public class ScriptEvaluator
             throw new ScriptException("Illegal token for factor at " + t.pos);
 
         Collections.reverse(pre_op);
-        for (Boolean b : pre_op)
+        for (char c : pre_op)
         {
-            if (b)
+            if (c == '-')
                 n = -n;
-            else
+            else if (c == '~')
                 n = ~n;
+            else
+                n = n == 0 ? -1 : 0;
         }
         return n;
     }

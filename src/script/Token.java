@@ -1,5 +1,7 @@
 package script;
 
+import java.util.Arrays;
+
 public class Token
 {
 
@@ -16,6 +18,9 @@ public class Token
 
     protected Token(TokenType type, int pos, Object value)
     {
+        if (type == TokenType.IDENTIFIER && Arrays.binarySearch(TokenType.reserved, value) >= 0)
+            throw new IllegalArgumentException("Identifier token (" + pos + ") cannot be keyword");
+
         this.type = type;
         this.pos = pos;
         this.value = value;
@@ -44,6 +49,8 @@ public class Token
         ASSIGN, /* '=' */
         IF, ELSE, /* keywords */
         OP, /* + - * / % & | ^ ~ == < <= > >= != */
-        LPAREN, RPAREN, LBRACE, RBRACE, EOF
+        LPAREN, RPAREN, LBRACE, RBRACE, EOF;
+
+        public static String[] reserved = { "else", "give", "has", "if", "state", "take", "text", "visible", "warp" };
     }
 }
