@@ -317,7 +317,7 @@ public class ScriptEvaluator
     {
         List<Character> pre_op = new ArrayList<>();
         Token t;
-        while ((t = get()).type == TokenType.OP && "-".equals(t.value) || "~".equals(t.value) || "!".equals(t.value))
+        while ((t = get()).type == TokenType.OP && "+ - ~ !".indexOf((String) t.value) >= 0)
         {
             next();
             pre_op.add(((String) t.value).charAt(0));
@@ -346,8 +346,8 @@ public class ScriptEvaluator
                 n = -n;
             else if (c == '~')
                 n = ~n;
-            else
-                n = n == 0 ? -1 : 0;
+            else if (c == '!') n = n == 0 ? -1 : 0;
+            // ignore '+' ("n = n;")
         }
         return n;
     }
