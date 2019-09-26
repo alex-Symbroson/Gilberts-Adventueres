@@ -363,8 +363,8 @@ public class ScriptEvaluator
             {
                 assertType(next(), TokenType.PERIOD);
                 assertType(next(), TokenType.BUILTIN_VAR);
-            } else if (t.type != TokenType.BUILTIN_VAR || !"state".equals(t.value));
-            throw new ScriptException("Not a valid token after period at " + t.pos);
+            } else if (t.type != TokenType.BUILTIN_VAR || !"state".equals(t.value))
+                throw new ScriptException("Not a valid token after period at " + t.pos);
         }
     }
 
@@ -445,6 +445,14 @@ public class ScriptEvaluator
             return true;
         else
             throw new ScriptException("Token at " + token.pos + " (" + token.type + ") should be " + type);
+    }
+
+    public void test(Script script)
+    {
+        this.script = script;
+        this.pointer = 0;
+        while (get() != Token.EOF && get().type != TokenType.RBRACE)
+            skipStatement();
     }
 
     public void eval(Script script)

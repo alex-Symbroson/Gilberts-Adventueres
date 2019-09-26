@@ -31,6 +31,11 @@ public class Token
         return type;
     }
 
+    public Object getValue()
+    {
+        return value;
+    }
+
     public String toString()
     {
         if (value != null)
@@ -51,6 +56,7 @@ public class Token
         OP, /* + - * / % & | ^ ~ == < <= > >= != */
         LPAREN, RPAREN, LBRACE, RBRACE, EOF;
 
-        public static String[] reserved = { "else", "give", "has", "if", "state", "take", "text", "visible", "warp", "while" };
+        public static String[] reserved = { "else", "give", "has", "if", "state", "take", "text", "visible", "warp",
+                "while" };
     }
 }

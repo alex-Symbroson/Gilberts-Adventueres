@@ -50,11 +50,13 @@ public class Controller implements Initializable
     private File current;
 
     private Consumer<File> save, open;
+    private Consumer<Stage> restart;
 
-    Controller(Consumer<File> save, Consumer<File> open)
+    Controller(Consumer<File> save, Consumer<File> open, Consumer<Stage> restart)
     {
         this.save = save;
         this.open = open;
+        this.restart = restart;
     }
 
     // initialize tree view with cell factory
@@ -165,6 +167,12 @@ public class Controller implements Initializable
             save.accept(current);
         } else
             logger.info("save to file aborted.");
+    }
+
+    @FXML
+    private void restart(Event event)
+    {
+        restart.accept(stage);
     }
 
     // confirm and quit app

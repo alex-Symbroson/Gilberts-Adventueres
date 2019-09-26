@@ -23,7 +23,8 @@
                <SeparatorMenuItem mnemonicParsing="false" />
                <Menu fx:id="prefsMenu" mnemonicParsing="false" text="Preferences..." />
                <SeparatorMenuItem mnemonicParsing="false" />
-               <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit" accelerator="Shortcut+Q" />
+               <MenuItem mnemonicParsing="false" onAction="#restart" text="Restart" />
+               <MenuItem mnemonicParsing="false" onAction="#quit" text="Exit" accelerator="Shortcut+X" />
              </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Help">

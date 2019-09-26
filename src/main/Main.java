@@ -12,8 +12,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
@@ -361,6 +363,7 @@ public class Main extends Application
             if (prefs.get(k, v).equals(v)) prefs.put(k, v);
         };
         put_def.accept("Show_Exit_Dialogb", "true");
+        put_def.accept("Preload_Levelsb", "false");
         put_def.accept("Saves_Dirf", System.getProperty("user.home"));
 
         res_levels = getClass().getResource("/level/");
@@ -377,7 +380,7 @@ public class Main extends Application
     {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("main.fxml"));
 
-        controller = new Controller(this::saveGame, this::loadGame);
+        controller = new Controller(this::saveGame, this::loadGame, this::restart);
         controller.setStage(primaryStage);
         controller.setPrefs(prefs);
         loader.setController(controller);
@@ -386,6 +389,34 @@ public class Main extends Application
 
         game_pane = controller.game;
 
+        if (prefs.getBoolean("Preload_Levelsb", false))
+        {
+            Queue<String> to_load = new LinkedList<>();
+            to_load.add("start");
+
+            while (!to_load.isEmpty())
+            {
+                GALevel level = get_level(to_load.poll());
+                level.objects.values().stream().flatMap(obj -> Arrays.stream(obj.scripts)).forEach(script ->
+                {
+                    for (int ix = 0; ix < script.size(); ++ix)
+                    {
+                        Token t = script.get(ix), t1 = ix >= 1 ? script.get(ix - 1) : Token.EOF,
+                                t2 = ix >= 2 ? script.get(ix - 2) : Token.EOF;
+                        // in var: level identifiers are followed by period and preceded by non-period
+                        // in built-in: level identifiers are arguments of warp()
+                        if (t.getType() == TokenType.IDENTIFIER
+                                && (t1.getType() != TokenType.PERIOD && script.get(ix + 1).getType() == TokenType.PERIOD
+                                        || t2.getType() == TokenType.BUILTIN_FUNC && "warp".equals(t2.getValue())))
+                        {
+                            String next = (String) t.getValue();
+                            if (!"_".equals(next) && !levels.containsKey(next)) to_load.add(next);
+                        }
+                    }
+                });
+            }
+        }
+
         primaryStage.setTitle("Gilbert's Adventüres");
         setUserAgentStylesheet(STYLESHEET_MODENA);
         primaryStage.setResizable(false);
@@ -393,6 +424,22 @@ public class Main extends Application
         primaryStage.show();
 
         enter("start");
+    }
+
+    protected void restart(Stage primaryStage)
+    {
+        // setBackground(null);
+        primaryStage.close();
+        this.stop();
+        levels.clear();
+
+        try
+        {
+            this.start(primaryStage);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     @Override
