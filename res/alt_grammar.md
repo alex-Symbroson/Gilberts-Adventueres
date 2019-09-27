@@ -2,23 +2,22 @@
 
     script = { expr } ;
     expr = { "+" | "-" | "~" | "!" } , (
-        "(" , expr , ")"
+        "(" , cmp , ")"
         | "{" , { expr } , "}"
         | INT
-        | var , "=" , cmp
-        | var
+        | var , [ "=" , cmp ]
         | ( "give" | "has" | "take" | "warp" ) , "(" , IDENTIFIER , ")"
         | "text" , "(" , STRING , ")"
-        | if_stmt
-        | while_stmt
+        | if_expr
+        | while_expr
     ) ;
     var = IDENTIFIER
         | IDENTIFIER , "." , IDENTIFIER , "." "visible"
         | IDENTIFIER , "." , [ IDENTIFIER , "." ] , "state" ;
-    if_stmt = "if" , "(" , expr , ")" , statement , [ "else" , statement ] ;
-    while_stmt = "while" , "(" , expr , ")" , statement ;
+    if_expr = "if" , "(" , expr , ")" , expr , [ "else" , expr ] ;
+    while_expr = "while" , "(" , expr , ")" , expr ;
     
-    cmp = sum , CMP_OP , sum ;
+    cmp = sum , [ CMP_OP , sum ] ;
     sum = product , { SUM_OP , product } ;
     product = expr , { PROD_OP , expr } ;
         
