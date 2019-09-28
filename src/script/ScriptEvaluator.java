@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 import main.GALevel;
 import main.GAObject;
-import main.Main;
 import script.Token.TokenType;
 
 public class ScriptEvaluator
@@ -36,6 +35,15 @@ public class ScriptEvaluator
         int n = 0;
         while (get() != Token.EOF && get().type != TokenType.RBRACE)
             n = evalExpr(context);
+        return n;
+    }
+
+    // evaluate comparison expressions until EOF or } (for console)
+    public int evalCmps(Map<String, Integer> context)
+    {
+        int n = 0;
+        while (get() != Token.EOF && get().type != TokenType.RBRACE)
+            n = evalCmp(context);
         return n;
     }
 
@@ -94,9 +102,12 @@ public class ScriptEvaluator
             {
                 String text = arg.value.toString();
                 Matcher m = INSERT.matcher(text);
-                text = m.replaceAll(
-                        res -> Main.isValidIdentifier(res.group(2)) ? Integer.toString(context.get(res.group(2)))
-                                : res.group());
+                text = m.replaceAll(res ->
+                {
+                    Integer i = context.get(res.group(2));
+                    if (i == null) throw new ScriptException("Unknown variable in text at " + arg.pos);
+                    return Integer.toString(i);
+                });
                 write_text.accept(text);
             }
             if ("warp".equals(t.value) && assertType(arg, TokenType.IDENTIFIER))
@@ -110,33 +121,36 @@ public class ScriptEvaluator
             assertType(next(), TokenType.RPAREN);
             n = 0;
             if (test)
-                n = evalExpr(context);
+                n = evalCmp(context);
             else
-                skipExpr();
+                skipCmp();
             if (get().type == TokenType.ELSE)
             {
                 next();
                 if (!test)
-                    n = evalExpr(context);
+                    n = evalCmp(context);
                 else
-                    skipExpr();
+                    skipCmp();
             }
         } else if (type == TokenType.WHILE)
         {
             assertType(next(), TokenType.LPAREN);
             int test_ptr = pointer;
-            boolean test = evalExpr(context) != 0;
+            boolean test = evalCmp(context) != 0;
             assertType(next(), TokenType.RPAREN);
 
+            int count = 0;
             n = 0;
             while (test)
             {
-                n = evalExpr(context);
+                n = evalCmp(context);
                 pointer = test_ptr;
-                test = evalExpr(context) != 0;
+                test = evalCmp(context) != 0;
                 next();
+                ++count;
+                if (count >= 0xFFFFFF) throw new ScriptException("Too many iterations in while() at " + get().pos);
             }
-            skipExpr();
+            skipCmp();
         } else
             throw new ScriptException("Not a valid statement at " + t.pos);
 
@@ -235,9 +249,11 @@ public class ScriptEvaluator
                 n *= b;
                 break;
             case '/':
+                if (b == 0) throw new ScriptException("Divisor at " + t.pos + " cannot be 0!");
                 n /= b;
                 break;
             case '%':
+                if (b == 0) throw new ScriptException("Divisor at " + t.pos + " cannot be 0!");
                 n %= b;
             }
         }
@@ -265,7 +281,7 @@ public class ScriptEvaluator
                 t = next();
                 assertType(t, TokenType.BUILTIN_VAR);
                 if ("visible".equals(t.value))
-                    return object.visibleIntProperty().get();
+                    return object.isVisible() ? -1 : 0;
                 else if ("state".equals(t.value))
                     return object.getState();
                 else
@@ -275,7 +291,11 @@ public class ScriptEvaluator
             else
                 throw new ScriptException("Not a valid token after period at " + t.pos);
         } else
-            return context.get(t.value.toString());
+        {
+            Integer i = context.get(t.value.toString());
+            if (i == null) throw new ScriptException("Unknown variable " + t.value.toString() + " at " + t.pos);
+            return i;
+        }
     }
 
     private void setVar(int value, Map<String, Integer> context)
@@ -294,7 +314,7 @@ public class ScriptEvaluator
                 assertType(next(), TokenType.PERIOD);
                 GAObject object = level == current_level && "_".equals(t.value) ? current_object
                         : level.getObject(t.value.toString());
-                Objects.requireNonNull(object);
+                if (object == null) throw new ScriptException("Unknown object at " + t.pos);
 
                 t = next();
                 assertType(t, TokenType.BUILTIN_VAR);
@@ -359,21 +379,21 @@ public class ScriptEvaluator
         } else if (type == TokenType.IF)
         {
             assertType(next(), TokenType.LPAREN);
-            skipExpr();
+            skipCmp();
             assertType(next(), TokenType.RPAREN);
-            skipExpr();
+            skipCmp();
             if (get().type == TokenType.ELSE)
             {
                 next();
-                skipExpr();
+                skipCmp();
             }
         } else if (type == TokenType.WHILE)
         {
             assertType(next(), TokenType.LPAREN);
-            skipExpr();
+            skipCmp();
             assertType(next(), TokenType.RPAREN);
-            skipExpr();
-        } else if (t.type != TokenType.INT) throw new ScriptException("Not a valid statement at " + t.pos);
+            skipCmp();
+        } else if (t.type != TokenType.INT) throw new ScriptException("Not a valid expression at " + t.pos);
     }
 
     // skip == < <= > >= !=
@@ -457,22 +477,33 @@ public class ScriptEvaluator
         this.script = script;
         this.pointer = 0;
         while (get() != Token.EOF && get().type != TokenType.RBRACE)
-            skipExpr();
+            skipCmp();
+    }
+
+    public void reset(Script script)
+    {
+        this.script = script;
+        this.pointer = 0;
     }
 
     public void eval(Script script)
     {
-        this.script = script;
-        this.pointer = 0;
+        reset(script);
         eval(new HashMap<>());
     }
 
-    public ScriptEvaluator(Function<String, GALevel> get_level, Consumer<String> warp_to_level,
-            Consumer<String> text)
+    public ScriptEvaluator(Function<String, GALevel> get_level, Consumer<String> warp_to_level, Consumer<String> text)
     {
         this.get_level = get_level;
         this.warp_to_level = warp_to_level;
         this.write_text = text;
+    }
+
+    public Consumer<String> setWriteText(Consumer<String> text)
+    {
+        Consumer<String> old = write_text;
+        write_text = text;
+        return old;
     }
 
     public void setCurrentLevel(GALevel level)

@@ -12,8 +12,8 @@
     var = IDENTIFIER
         | IDENTIFIER , "." , IDENTIFIER , "." "visible"
         | IDENTIFIER , "." , [ IDENTIFIER , "." ] , "state" ;
-    if_expr = "if" , "(" , expr , ")" , expr , [ "else" , expr ] ;
-    while_expr = "while" , "(" , expr , ")" , expr ;
+    if_expr = "if" , "(" , cmp , ")" , cmp , [ "else" , cmp ] ;
+    while_expr = "while" , "(" , cmp , ")" , cmp ;
     
     cmp = sum , [ CMP_OP , sum ] ;
     sum = product , { SUM_OP , product } ;

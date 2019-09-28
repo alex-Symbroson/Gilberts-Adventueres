@@ -1,3 +1,13 @@
 .root {
     -fx-base: #000;
 }
+
+.text-area {
+    -fx-control-inner-background: black;
+    -fx-background-color: black;
+    -fx-background-insets: 0, 0, 0, 0;
+    -fx-font-family: monospace;
+    -fx-text-fill: white;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}

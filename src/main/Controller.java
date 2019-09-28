@@ -1,28 +1,37 @@
 package main;
 
 import java.io.File;
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
 
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.CustomMenuItem;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.control.TextFormatter.Change;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -33,10 +42,12 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
+import script.Script;
+import script.ScriptException;
 
-public class Controller implements Initializable
+public class Controller
 {
-    // debug logger
+    // logger
     private static final Logger logger = Logger.getLogger(Controller.class.getName());
     @FXML
     protected Pane game;
@@ -44,29 +55,28 @@ public class Controller implements Initializable
     private Menu prefsMenu;
     @FXML
     private Label status_left, status_right;
+    @FXML
+    private MenuItem showConsole;
 
-    private Preferences prefs;
+    private Main main;
+
     private Stage stage;
     private File current;
+    private BooleanProperty holding_c;
 
-    private Consumer<File> save, open;
-    private Consumer<Stage> restart;
-
-    Controller(Consumer<File> save, Consumer<File> open, Consumer<Stage> restart)
+    Controller(Main main)
     {
-        this.save = save;
-        this.open = open;
-        this.restart = restart;
+        this.main = main;
+
+        holding_c = new SimpleBooleanProperty(false);
     }
 
-    // initialize tree view with cell factory
-    @Override
-    public void initialize(URL location, ResourceBundle resources)
+    public void initialize()
     {
         String[] keys = {};
         try
         {
-            keys = prefs.keys();
+            keys = main.prefs.keys();
         } catch (BackingStoreException e)
         {
             e.printStackTrace();
@@ -78,14 +88,14 @@ public class Controller implements Initializable
             if (type == 'f')
             {
                 StringProperty prop = new SimpleStringProperty(null);
-                Label text = new Label(name + ": " + prefs.get(key, ""));
-                prop.addListener((obs, o, n) -> prefs.put(key, n));
+                Label text = new Label(name + ": " + main.prefs.get(key, ""));
+                prop.addListener((obs, o, n) -> main.prefs.put(key, n));
                 prop.addListener((obs, o, n) -> text.setText(name + ": " + n));
-                prop.set(prefs.get(key, ""));
+                prop.set(main.prefs.get(key, ""));
 
                 DirectoryChooser dirc = new DirectoryChooser();
                 dirc.setTitle(name);
-                dirc.setInitialDirectory(new File(prefs.get(key, "")));
+                dirc.setInitialDirectory(new File(main.prefs.get(key, "")));
                 text.setOnMouseClicked(e -> prop.set(dirc.showDialog(stage).toString()));
 
                 prefsMenu.getItems().add(new CustomMenuItem(text, false));
@@ -93,12 +103,22 @@ public class Controller implements Initializable
             {
                 CheckBox box = new CheckBox(name);
                 box.setAllowIndeterminate(false);
-                box.setSelected(prefs.getBoolean(key, false));
-                box.setOnAction(e -> prefs.putBoolean(key, box.isSelected()));
+                box.setSelected(main.prefs.getBoolean(key, false));
+                box.setOnAction(e -> main.prefs.putBoolean(key, box.isSelected()));
                 prefsMenu.getItems().add(new CustomMenuItem(box, false));
             }
         }
 
+        game.setOnKeyPressed(e ->
+        {
+            if ("c".equals(e.getText()) && e.isControlDown() && e.isShiftDown()) holding_c.set(true);
+        });
+        game.setOnKeyReleased(e ->
+        {
+            if ("c".equals(e.getText())) holding_c.set(false);
+        });
+
+        showConsole.visibleProperty().bind(holding_c);
     }
 
     public void setStatus(String status)
@@ -118,14 +138,14 @@ public class Controller implements Initializable
     {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Continue adventüres");
-        fileChooser.setInitialDirectory(new File(prefs.get("Saves_Dirf", "")));
+        fileChooser.setInitialDirectory(new File(main.prefs.get("Saves_Dirf", "")));
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Gilbert's Adventüres save file", "*.ga"));
         File selectedFile = fileChooser.showOpenDialog(stage);
 
         if (selectedFile != null)
         {
             logger.info("open file " + selectedFile);
-            open.accept(selectedFile);
+            main.loadGame(selectedFile);
             current = selectedFile;
         } else
             logger.info("open file aborted.");
@@ -138,7 +158,7 @@ public class Controller implements Initializable
         {
             FileChooser fchoose = new FileChooser();
             fchoose.setTitle("Save adventüres");
-            fchoose.setInitialDirectory(new File(prefs.get("Saves_Dirf", "")));
+            fchoose.setInitialDirectory(new File(main.prefs.get("Saves_Dirf", "")));
             fchoose.getExtensionFilters().add(new ExtensionFilter("Gilbert's Adventüres save file", "*.ga"));
 
             current = fchoose.showSaveDialog(stage);
@@ -147,7 +167,7 @@ public class Controller implements Initializable
         if (current != null)
         {
             logger.info("save to file " + current);
-            save.accept(current);
+            main.saveGame(current);
         } else
             logger.info("save to file aborted.");
     }
@@ -157,22 +177,46 @@ public class Controller implements Initializable
     {
         FileChooser fchoose = new FileChooser();
         fchoose.setTitle("Save adventüres");
-        fchoose.setInitialDirectory(new File(prefs.get("Saves_Dirf", "")));
+        fchoose.setInitialDirectory(new File(main.prefs.get("Saves_Dirf", "")));
         fchoose.getExtensionFilters().add(new ExtensionFilter("Gilbert's Adventüres save file", "*.ga"));
         current = fchoose.showSaveDialog(stage);
 
         if (current != null)
         {
             logger.info("save to file " + current);
-            save.accept(current);
+            main.saveGame(current);
         } else
             logger.info("save to file aborted.");
     }
 
     @FXML
+    private void showConsole(Event event)
+    {
+        holding_c.set(false);
+
+        Dialog<Integer> dialog = new Dialog<>();
+        dialog.setTitle("Script Console");
+
+        DialogPane content = dialog.getDialogPane();
+        content.setHeader(null);
+        content.getButtonTypes().add(new ButtonType("Done", ButtonData.NO));
+        content.getStylesheets().addAll(game.getParent().getStylesheets());
+
+        TextArea text = new TextArea();
+        text.setMinHeight(stage.getHeight());
+        text.setWrapText(true);
+        text.setTextFormatter(
+                new TextFormatter<>(new ConsoleFilter(text, new HashMap<String, Integer>(), dialog::close)));
+
+        content.setContent(text);
+
+        dialog.showAndWait();
+    }
+
+    @FXML
     private void restart(Event event)
     {
-        restart.accept(stage);
+        main.restart(stage);
     }
 
     // confirm and quit app
@@ -181,7 +225,7 @@ public class Controller implements Initializable
     {
         boolean quit = true;
 
-        if (prefs.getBoolean("Show_Exit_Dialogb", true))
+        if (main.prefs.getBoolean("Show_Exit_Dialogb", true))
         {
             // two reasons for using ButtonData.NO:
             // has ButtonData.defaultButton = false, inheriting style data from its DialogPane
@@ -230,9 +274,6 @@ public class Controller implements Initializable
                 mkLabel("'My name is Richarmandias, king of kings:\nLook upon my creation, ye Mighty, and despair!'",
                         Color.WHITE, Font.font("Copperplate Gothic Light", 14)),
                 0, 1);
-        // labelpane.add(mkLabel("Nothing besides remains. Round the decay\nOf that colossal wreck, boundless and
-        // bare\nThe lone and level sands stretch far away.",
-        // Color.GOLD), 0, 2);
         alert.getDialogPane().setContent(labelpane);
         alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 
@@ -245,8 +286,96 @@ public class Controller implements Initializable
         this.stage.setOnCloseRequest(e -> quit(e));
     }
 
-    public void setPrefs(Preferences prefs)
+    class ConsoleFilter implements UnaryOperator<Change>
     {
-        this.prefs = prefs;
+        int last_prompt, index;
+        TextArea area;
+        Map<String, Integer> context;
+        List<String> lines;
+        Runnable on_exit;
+
+        ConsoleFilter(TextArea text_area, Map<String, Integer> context, Runnable on_exit)
+        {
+            area = text_area;
+            area.appendText(" >> ");
+            last_prompt = area.getLength();
+            index = 0;
+            lines = new ArrayList<String>();
+
+            this.context = context;
+            this.on_exit = on_exit;
+        }
+
+        public Change apply(Change c)
+        {
+            // arrow up -> show previous line
+            if (c.getRangeStart() < last_prompt)
+                if (index > 0 && c.getRangeStart() < last_prompt - 1)
+                {
+                    --index;
+                    String line = lines.get(index);
+                    c.setText(line);
+                    c.setRange(last_prompt, area.getLength());
+                    int pos = last_prompt + line.length();
+                    c.selectRange(pos, pos);
+                    return c;
+                } else
+                    return null;
+            // double \n -> execute script
+            else if (c.getControlText().endsWith("\n"))
+            {
+                if (c.getText().equals("\n"))
+                {
+                    StringBuilder text = new StringBuilder();
+
+                    String script_text = area.getText(last_prompt, area.getLength()).trim();
+                    if ("!exit".equals(script_text) || "!quit".equals(script_text) || "!done".equals(script_text))
+                    {
+                        on_exit.run();
+                        return null;
+                    }
+                    lines.add(script_text);
+                    Script script = main.loader.loadScript(script_text);
+                    main.eval.reset(script);
+                    main.eval.setCurrentObject(null);
+                    Consumer<String> old_write = main.eval.setWriteText(s -> text.append(s + "\n"));
+
+                    try
+                    {
+                        int res = main.eval.evalCmps(context);
+                        text.append(Integer.toString(res));
+                    } catch (ScriptException e)
+                    {
+                        text.append("Error: " + e.getMessage());
+                    }
+                    main.eval.setWriteText(old_write);
+                    text.append("\n >> ");
+
+                    int pos = c.getControlText().length() + text.length();
+                    last_prompt = pos;
+                    c.setText(text.toString());
+                    c.selectRange(pos, pos);
+                }
+                // after single \n -> insert inset
+                else if (!c.getText().isEmpty() && c.getRangeEnd() == area.getLength())
+                {
+                    c.setText("    " + c.getText());
+                    int pos = c.getCaretPosition();
+                    c.selectRange(pos + 4, pos + 4);
+                }
+            }
+            // after '(' insert ')' (for text, insert "('')")
+            else if ("(".equals(c.getText()))
+                if (area.getText().endsWith("text"))
+                {
+                    c.setText("('')");
+                    c.selectRange(c.getAnchor() + 1, c.getCaretPosition() + 1);
+                } else
+                    c.setText("()");
+            // after '{' insert '}'
+            else if ("{".equals(c.getText())) c.setText("{}");
+            index = lines.size();
+            return c;
+        }
     }
 }

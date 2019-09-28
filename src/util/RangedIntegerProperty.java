@@ -72,7 +72,8 @@ public class RangedIntegerProperty extends SimpleIntegerProperty
     @Override
     public void set(int newValue)
     {
-        if (newValue < 0 || newValue >= range) throw new IllegalArgumentException();
+        if (newValue < 0 || newValue >= range)
+            throw new IndexOutOfBoundsException(String.format("Value %d outside range [0, %d)", newValue, range));
 
         super.set(newValue);
     }

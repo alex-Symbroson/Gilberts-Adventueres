@@ -2,14 +2,9 @@ package main;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -18,7 +13,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -36,204 +30,34 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundSize;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import script.Script;
 import script.ScriptEvaluator;
-import script.ScriptException;
-import script.ScriptLexer;
 import script.Token;
 import script.Token.TokenType;
 
 public class Main extends Application
 {
-    // debug logger
-    private static final Logger logger = Logger.getLogger(Main.class.getName());
-
     private Controller controller;
-    private Pane game_pane;
-    private Preferences prefs;
+    protected Preferences prefs;
 
     private GALevel current_level;
     private InvalidationListener level_listener;
     private Map<String, GALevel> levels = new HashMap<>();
 
-    private URL res_levels, res_img;
-    private ScriptLexer lexer;
-    private ScriptEvaluator eval;
-
-    protected Script load_script(String script_string)
-    {
-        lexer.yyreset(new StringReader(script_string));
-
-        Script script = new Script(eval);
-        try
-        {
-            Token t;
-            do
-            {
-                script.add(t = lexer.yylex());
-            } while (t.getType() != TokenType.EOF);
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-            script.add(Token.EOF);
-        }
-
-        logger.info(script.toString());
-
-        if (!script.testValid())
-        {
-            controller.setStatus("Script Error");
-            throw new ScriptException("Script lexed from \"" + script_string + "\" not valid");
-        }
-
-        return script;
-    }
-
-    protected GAObject load_object(JSONObject json, String level)
-    {
-        if (!json.has("name") || !json.has("x") || !json.has("y") || !json.has("script")) return null;
-
-        String name = json.getString("name");
-        boolean active = json.has("active") ? json.getBoolean("active") : true;
-        int state_count = json.has("states") ? json.getInt("states") : 1;
-
-        List<String> sprite_list = new ArrayList<>();
-        if (json.has("sprite"))
-        {
-            Object sp = json.get("sprite");
-            if (sp instanceof JSONArray)
-                for (Object o : (JSONArray) sp)
-                    sprite_list.add((String) o);
-            else if (sp instanceof String)
-                sprite_list.add((String) sp);
-            else
-                return null;
-            if (sprite_list.size() != state_count) return null;
-        } else if (state_count > 1)
-            for (int i = 1; i <= state_count; ++i)
-                sprite_list.add(level + "." + name + "_" + i);
-        else
-            sprite_list.add(level + "." + name);
-
-        List<Image> sprite_list_img = new ArrayList<>();
-        for (String file : sprite_list)
-            try
-            {
-                sprite_list_img.add(Loader.loadSprite(new URL(res_img, file + ".png")));
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-                return null;
-            }
-
-        List<Script> script_list = new ArrayList<>();
-        Object script_entry = json.get("script");
-        if (script_entry instanceof JSONArray)
-        {
-            for (Object o : (JSONArray) script_entry)
-                script_list.add(load_script((String) o));
-            if (script_list.size() < state_count)
-            {
-                script_list.addAll(Collections.nCopies(state_count - script_list.size(), script_list.get(0)));
-                logger.warning(String.format("Amended script list of %s.%s by %d scripts", current_level.name, name,
-                        state_count - script_list.size()));
-            }
-        } else
-            script_list.addAll(Collections.nCopies(state_count, load_script((String) script_entry)));
-
-        return new GAObject(name, active, state_count, sprite_list_img.toArray(new Image[0]),
-                script_list.toArray(new Script[0]), json.getDouble("x") * game_pane.getWidth(),
-                json.getDouble("y") * game_pane.getHeight());
-    }
-
-    // error codes:
-    // 1 -> level file not found
-    // 2 -> object does not have required structure
-    // 3 -> background list does not have required structure
-    // 4 -> could not read background image(s)
-    // 5 -> problem reading objects
-    protected int load_level(String level_name)
-    {
-        if (levels.containsKey(level_name)) return 0;
-
-        URL level_file = null;
-        try
-        {
-            level_file = new URL(res_levels, level_name + ".json");
-        } catch (MalformedURLException e)
-        {
-            e.printStackTrace();
-        }
-
-        JSONObject json;
-        try
-        {
-            String src = new String(level_file.openStream().readAllBytes());
-            json = new JSONObject(src);
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-            return 1;
-        }
-        if (!json.has("name") || !json.has("music") || !json.has("objects")) return 2;
-        String name = json.getString("name");
-        if (!name.equals(level_name) || !isValidIdentifier(name)) return 2;
-        int state_count = json.has("states") ? json.getInt("states") : 1;
-
-        List<String> bg_list = new ArrayList<>();
-        if (json.has("background"))
-        {
-            Object bg = json.get("background");
-            if (bg instanceof JSONArray)
-                for (Object o : (JSONArray) bg)
-                    bg_list.add((String) o);
-            else if (bg instanceof String)
-                bg_list.add((String) bg);
-            else
-                return 3;
-            if (bg_list.size() != state_count) return 3;
-        } else if (state_count > 1)
-            for (int i = 1; i <= state_count; ++i)
-                bg_list.add(name + "_" + i);
-        else
-            bg_list.add(name);
-
-        List<Image> bg_list_img = new ArrayList<>();
-        for (String bg : bg_list)
-            try
-            {
-                // bg_list_img.add(Loader.loadBackground(res_img.resolve(bg + ".png"), game_pane.getWidth(),
-                // game_pane.getHeight()));
-                bg_list_img.add(Loader.loadSprite(new URL(res_img, bg + ".png")));
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-                return 4;
-            }
-
-        GALevel level = new GALevel(name, state_count, bg_list_img.toArray(new Image[0]));
-        for (Object entry : json.getJSONArray("objects"))
-        {
-            if (!(entry instanceof JSONObject)) return 5;
-            GAObject object = load_object((JSONObject) entry, name);
-            if (object == null) return 6;
-            level.addObject(object);
-        }
-
-        levels.put(name, level);
-        return 0;
-    }
+    protected Loader loader;
+    protected ScriptEvaluator eval;
 
     protected GALevel get_level(String level_name)
     {
-        int err = load_level(level_name);
-        if (err != 0)
+        if (!levels.containsKey(level_name)) try
         {
-            System.err.println("Error " + err);
-            controller.setStatus("Error " + err);
+            levels.put(level_name,
+                    GALevel.load(level_name, loader, controller.game.getWidth(), controller.game.getHeight()));
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+            controller.setStatus("Error " + e.getMessage());
         }
 
         return levels.get(level_name);
@@ -245,7 +69,7 @@ public class Main extends Application
     {
         if (bg_img == null)
         {
-            game_pane.setBackground(NULL_BG);
+            controller.game.setBackground(NULL_BG);
             return;
         }
 
@@ -253,13 +77,13 @@ public class Main extends Application
                 new BackgroundSize(1.0, 1.0, true, true, true, true));
         // game_pane.setMaxWidth(bg_img.getWidth());
         // game_pane.setMaxHeight(bg_img.getHeight());
-        game_pane.setBackground(new Background(bg));
+        controller.game.setBackground(new Background(bg));
 
-        double scale = game_pane.getWidth() / bg_img.getWidth();
-        if (scale != game_pane.getHeight() / bg_img.getHeight())
+        double scale = controller.game.getWidth() / bg_img.getWidth();
+        if (scale != controller.game.getHeight() / bg_img.getHeight())
             throw new IllegalArgumentException("Background for " + current_level.name + " has wrong aspect ratio");
 
-        game_pane.getChildren().forEach(n ->
+        controller.game.getChildren().forEach(n ->
         {
             GAObject o = (GAObject) n;
             o.setLayoutX(o.getFitWidth() * (scale - 1) / 2);
@@ -274,11 +98,13 @@ public class Main extends Application
         if (current_level != null)
         {
             current_level.stateProperty().removeListener(level_listener);
-            game_pane.getChildren().clear();
+            controller.game.getChildren().clear();
         }
 
         current_level = get_level(new_level);
-        game_pane.getChildren().addAll(current_level.objects.values());
+        if (current_level == null) return;
+
+        controller.game.getChildren().addAll(current_level.objects.values());
         setBackground(current_level.getBackground());
 
         level_listener = e -> setBackground(current_level.getBackground());
@@ -344,7 +170,7 @@ public class Main extends Application
             {
                 JSONArray ia = lvl_data.getJSONArray(obj);
                 GAObject ob = level.getObject(obj);
-                ob.visibleIntProperty().set(ia.getInt(0));
+                ob.setVisible(ia.getInt(-1) != 0);
                 ob.setState(ia.getInt(1));
             }
         }
@@ -366,56 +192,56 @@ public class Main extends Application
         put_def.accept("Preload_Levelsb", "false");
         put_def.accept("Saves_Dirf", System.getProperty("user.home"));
 
-        res_levels = getClass().getResource("/level/");
-        res_img = getClass().getResource("/img/");
-
-        lexer = new ScriptLexer(null);
         eval = new ScriptEvaluator(this::get_level, this::enter, System.out::println);
+        loader = new Loader(getClass().getResource("/level/"), getClass().getResource("/img/"), eval);
 
         Platform.setImplicitExit(true);
+    }
+
+    private void preloadLevels(String start)
+    {
+        Queue<String> to_load = new LinkedList<>();
+        to_load.add(start);
+
+        while (!to_load.isEmpty())
+        {
+            GALevel level = get_level(to_load.poll());
+            level.objects.values().stream().flatMap(obj -> Arrays.stream(obj.scripts)).forEach(script ->
+            {
+                for (int ix = 0; ix < script.size(); ++ix)
+                {
+                    Token t = script.get(ix), t1 = ix >= 1 ? script.get(ix - 1) : Token.EOF,
+                            t2 = ix >= 2 ? script.get(ix - 2) : Token.EOF;
+                    // in var: level identifiers are followed by period and preceded by non-period
+                    // in built-in: level identifiers are arguments of warp()
+                    if (t.getType() == TokenType.IDENTIFIER
+                            && (t1.getType() != TokenType.PERIOD && script.get(ix + 1).getType() == TokenType.PERIOD
+                                    || t2.getType() == TokenType.BUILTIN_FUNC && "warp".equals(t2.getValue())))
+                    {
+                        String next = (String) t.getValue();
+                        if (!"_".equals(next) && !levels.containsKey(next)) to_load.add(next);
+                    }
+                }
+            });
+        }
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception
     {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("main.fxml"));
+        FXMLLoader fxml_loader = new FXMLLoader(getClass().getResource("main.fxml"));
 
-        controller = new Controller(this::saveGame, this::loadGame, this::restart);
+        controller = new Controller(this);
+        /*
+         * eval.setWriteText(System.out::println); int result = load_script(s).eval(null); // TODO here be the normal
+         * text function eval.setWriteText(System.out::println); return result;
+         */
         controller.setStage(primaryStage);
-        controller.setPrefs(prefs);
-        loader.setController(controller);
-        Parent root = loader.load();
+        fxml_loader.setController(controller);
+        Parent root = fxml_loader.load();
         root.getStylesheets().add(getClass().getResource("main.css").toString());
 
-        game_pane = controller.game;
-
-        if (prefs.getBoolean("Preload_Levelsb", false))
-        {
-            Queue<String> to_load = new LinkedList<>();
-            to_load.add("start");
-
-            while (!to_load.isEmpty())
-            {
-                GALevel level = get_level(to_load.poll());
-                level.objects.values().stream().flatMap(obj -> Arrays.stream(obj.scripts)).forEach(script ->
-                {
-                    for (int ix = 0; ix < script.size(); ++ix)
-                    {
-                        Token t = script.get(ix), t1 = ix >= 1 ? script.get(ix - 1) : Token.EOF,
-                                t2 = ix >= 2 ? script.get(ix - 2) : Token.EOF;
-                        // in var: level identifiers are followed by period and preceded by non-period
-                        // in built-in: level identifiers are arguments of warp()
-                        if (t.getType() == TokenType.IDENTIFIER
-                                && (t1.getType() != TokenType.PERIOD && script.get(ix + 1).getType() == TokenType.PERIOD
-                                        || t2.getType() == TokenType.BUILTIN_FUNC && "warp".equals(t2.getValue())))
-                        {
-                            String next = (String) t.getValue();
-                            if (!"_".equals(next) && !levels.containsKey(next)) to_load.add(next);
-                        }
-                    }
-                });
-            }
-        }
+        if (prefs.getBoolean("Preload_Levelsb", false)) preloadLevels("start");
 
         primaryStage.setTitle("Gilbert's Adventüres");
         setUserAgentStylesheet(STYLESHEET_MODENA);
@@ -423,12 +249,14 @@ public class Main extends Application
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
+        controller.game.requestFocus();
+
         enter("start");
     }
 
     protected void restart(Stage primaryStage)
     {
-        // setBackground(null);
+        setBackground(null);
         primaryStage.close();
         this.stop();
         levels.clear();

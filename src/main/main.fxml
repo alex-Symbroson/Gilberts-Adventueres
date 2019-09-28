@@ -21,6 +21,7 @@
                <MenuItem mnemonicParsing="false" text="Save" onAction="#save" accelerator="Shortcut+S" />
                <MenuItem mnemonicParsing="false" text="Save As..." onAction="#saveAs" />
                <SeparatorMenuItem mnemonicParsing="false" />
+               <MenuItem fx:id="showConsole" mnemonicParsing="false" visible="false" text="Script Console" onAction="#showConsole" />
                <Menu fx:id="prefsMenu" mnemonicParsing="false" text="Preferences..." />
                <SeparatorMenuItem mnemonicParsing="false" />
                <MenuItem mnemonicParsing="false" onAction="#restart" text="Restart" />
