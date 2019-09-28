@@ -1,7 +1,7 @@
-﻿    script = { expr } ;
+﻿    script = { cmp } ;
     expr = { "+" | "-" | "~" | "!" } , (
         "(" , cmp , ")"
-        | "{" , { expr } , "}"
+        | "{" , { cmp } , "}"
         | INT
         | var , [ "=" , cmp ]
         | ( "give" | "has" | "take" | "warp" ) , "(" , IDENTIFIER , ")"

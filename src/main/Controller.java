@@ -342,7 +342,7 @@ public class Controller
 
                     try
                     {
-                        int res = main.eval.evalCmps(context);
+                        int res = main.eval.eval(context);
                         text.append(Integer.toString(res));
                     } catch (ScriptException e)
                     {

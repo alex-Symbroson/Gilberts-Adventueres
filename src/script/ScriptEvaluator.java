@@ -34,15 +34,6 @@ public class ScriptEvaluator
     {
         int n = 0;
         while (get() != Token.EOF && get().type != TokenType.RBRACE)
-            n = evalExpr(context);
-        return n;
-    }
-
-    // evaluate comparison expressions until EOF or } (for console)
-    public int evalCmps(Map<String, Integer> context)
-    {
-        int n = 0;
-        while (get() != Token.EOF && get().type != TokenType.RBRACE)
             n = evalCmp(context);
         return n;
     }
@@ -117,7 +108,7 @@ public class ScriptEvaluator
         } else if (type == TokenType.IF)
         {
             assertType(next(), TokenType.LPAREN);
-            boolean test = evalExpr(context) != 0;
+            boolean test = evalCmp(context) != 0;
             assertType(next(), TokenType.RPAREN);
             n = 0;
             if (test)
@@ -353,7 +344,7 @@ public class ScriptEvaluator
         } else if (type == TokenType.LBRACE)
         {
             while (get() != Token.EOF && get().type != TokenType.RBRACE)
-                skipExpr();
+                skipCmp();
             assertType(next(), TokenType.RBRACE);
         } else if (type == TokenType.IDENTIFIER)
         {
