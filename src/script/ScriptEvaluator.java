@@ -61,7 +61,12 @@ public class ScriptEvaluator
             assertType(next(), TokenType.RPAREN);
         } else if (type == TokenType.LBRACE)
         {
-            n = eval(new HashMap<>(context));
+            Map<String, Integer> ncontext = new HashMap<>(context);
+            n = eval(ncontext);
+            ncontext.forEach((s, i) ->
+            {
+                if (context.containsKey(s)) context.put(s, i);
+            });
             assertType(next(), TokenType.RBRACE);
         } else if (t.type == TokenType.INT)
             n = (Integer) t.value;

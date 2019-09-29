@@ -366,7 +366,7 @@ public class Controller
             }
             // after '(' insert ')' (for text, insert "('')")
             else if ("(".equals(c.getText()))
-                if (area.getText().endsWith("text"))
+                if (area.getText().substring(0, c.getRangeStart()).endsWith("text"))
                 {
                     c.setText("('')");
                     c.selectRange(c.getAnchor() + 1, c.getCaretPosition() + 1);
