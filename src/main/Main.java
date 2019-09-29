@@ -192,16 +192,13 @@ public class Main extends Application
         put_def.accept("Preload_Levelsb", "false");
         put_def.accept("Saves_Dirf", System.getProperty("user.home"));
 
-        eval = new ScriptEvaluator(this::get_level, this::enter, System.out::println);
-        loader = new Loader(getClass().getResource("/level/"), getClass().getResource("/img/"), eval);
-
         Platform.setImplicitExit(true);
     }
 
-    private void preloadLevels(String start)
+    private void preload()
     {
         Queue<String> to_load = new LinkedList<>();
-        to_load.add(start);
+        to_load.add("start");
 
         while (!to_load.isEmpty())
         {
@@ -241,7 +238,10 @@ public class Main extends Application
         Parent root = fxml_loader.load();
         root.getStylesheets().add(getClass().getResource("main.css").toString());
 
-        if (prefs.getBoolean("Preload_Levelsb", false)) preloadLevels("start");
+        eval = new ScriptEvaluator(this::get_level, this::enter, System.out::println);
+        loader = new Loader(getClass().getResource("/level/"), getClass().getResource("/img/"), eval);
+
+        if (prefs.getBoolean("Preload_Levelsb", false)) preload();
 
         primaryStage.setTitle("Gilbert's Adventüres");
         setUserAgentStylesheet(STYLESHEET_MODENA);
