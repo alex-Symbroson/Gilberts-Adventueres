@@ -308,6 +308,7 @@ public class Controller
 
         public Change apply(Change c)
         {
+            c.setText(c.getText().replace("\t", "  "));
             // arrow up -> show previous line
             if (c.getRangeStart() < last_prompt)
                 if (index > 0 && c.getRangeStart() < last_prompt - 1)
@@ -321,10 +322,10 @@ public class Controller
                     return c;
                 } else
                     return null;
-            // double \n -> execute script
-            else if (c.getControlText().endsWith("\n"))
+            else if (c.getText().equals("\n"))
             {
-                if (c.getText().equals("\n"))
+                // two \n -> evaluate code, print result
+                if (c.getRangeEnd() == area.getLength() && c.getControlText().endsWith("\n    "))
                 {
                     StringBuilder text = new StringBuilder();
 
@@ -351,15 +352,16 @@ public class Controller
                     main.eval.setWriteText(old_write);
                     text.append("\n >> ");
 
-                    int pos = c.getControlText().length() + text.length();
+                    int pos = c.getControlText().length() + text.length() - 4;
                     last_prompt = pos;
                     c.setText(text.toString());
+                    c.setRange(c.getRangeStart() - 4, c.getRangeEnd());
                     c.selectRange(pos, pos);
                 }
-                // after single \n -> insert inset
-                else if (!c.getText().isEmpty() && c.getRangeEnd() == area.getLength())
+                // else put space after newline
+                else
                 {
-                    c.setText("    " + c.getText());
+                    c.setText("\n    ");
                     int pos = c.getCaretPosition();
                     c.selectRange(pos + 4, pos + 4);
                 }
