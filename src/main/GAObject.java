@@ -82,7 +82,7 @@ public class GAObject extends ImageView
 
         List<Image> sprite_list_img = new ArrayList<>();
         for (String file : sprite_list)
-            sprite_list_img.add(loader.loadSprite(file));
+            sprite_list_img.add(loader.loadImage(file));
 
         List<Script> script_list = new ArrayList<>();
         Object script_entry = json.get("script");

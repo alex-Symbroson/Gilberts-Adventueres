@@ -70,7 +70,7 @@ public class GALevel
         List<Image> bg_list_img = new ArrayList<>();
         for (String bg : bg_list)
             // bg_list_img.add(Loader.loadBackground(bg, width, height));
-            bg_list_img.add(loader.loadSprite(bg));
+            bg_list_img.add(loader.loadImage(bg));
 
         GALevel level = new GALevel(name, state_count, bg_list_img.toArray(new Image[0]));
         for (Object entry : json.getJSONArray("objects"))

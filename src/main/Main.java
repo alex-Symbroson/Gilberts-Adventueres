@@ -242,6 +242,8 @@ public class Main extends Application
         loader = new Loader(getClass().getResource("/level/"), getClass().getResource("/img/"), eval);
 
         if (prefs.getBoolean("Preload_Levelsb", false)) preload();
+        
+        primaryStage.getIcons().add(loader.loadImage("title"));
 
         primaryStage.setTitle("Gilbert's Adventüres");
         setUserAgentStylesheet(STYLESHEET_MODENA);

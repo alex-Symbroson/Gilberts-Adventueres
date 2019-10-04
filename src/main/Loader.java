@@ -81,9 +81,9 @@ public class Loader
         return json;
     }
 
-    public Image loadSprite(String file) throws IOException
+    public Image loadImage(String file) throws IOException
     {
-        Image img = new Image((new URL(res_img, file + ".png")).openStream(), 0, 0, true, false);
+        Image img = new Image((new URL(res_img, file + ".png")).openStream());
 
         if (img.errorProperty().get()) throw new IOException(img.getException());
 
