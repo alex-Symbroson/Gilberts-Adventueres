@@ -507,6 +507,11 @@ public class ScriptEvaluator
         current_level = level;
     }
 
+    public GAObject getCurrentObject()
+    {
+        return current_object;
+    }
+
     public void setCurrentObject(GAObject object)
     {
         current_object = object;

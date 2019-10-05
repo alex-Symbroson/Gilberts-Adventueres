@@ -19,12 +19,18 @@ import java.util.prefs.Preferences;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.SequentialTransition;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -32,6 +38,7 @@ import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundSize;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import script.ScriptEvaluator;
 import script.Token;
 import script.Token.TokenType;
@@ -61,6 +68,46 @@ public class Main extends Application
         }
 
         return levels.get(level_name);
+    }
+
+    protected void text(String text)
+    {
+        text(eval.getCurrentObject(), text);
+    }
+
+    private void text(GAObject obj, String text)
+    {
+        Label label = new Label();
+        label.setStyle(
+                "-fx-background-color: white; -fx-text-fill: black; -fx-background-radius: 30; -fx-background-insets: -5, -5, -5, -5;");
+        label.setTranslateX(obj.getX() + obj.getFitWidth() / 2);
+        label.setTranslateY(obj.getY() + obj.getFitHeight());
+        label.setText("");
+        controller.game.getChildren().add(label);
+
+        IntegerProperty time = new SimpleIntegerProperty(0);
+        Timeline write_anim = new Timeline();
+        KeyFrame frame = new KeyFrame(Duration.seconds(0.03), event ->
+        {
+            int t = time.get();
+            if (t <= text.length())
+            {
+                label.setText(text.substring(0, t));
+                time.set(t + 1);
+            }
+        });
+        write_anim.getKeyFrames().add(frame);
+        write_anim.setCycleCount(Timeline.INDEFINITE);
+
+        Timeline wait_anim = new Timeline(new KeyFrame(Duration.millis(0.1)));
+        SequentialTransition seq = new SequentialTransition(write_anim, wait_anim);
+
+        label.setOnMouseClicked(e ->
+        {
+            seq.stop();
+            controller.game.getChildren().remove(label);
+        });
+        seq.play();
     }
 
     private static final Background NULL_BG = new Background(new BackgroundFill(Color.BLACK, null, null));
@@ -229,20 +276,16 @@ public class Main extends Application
         FXMLLoader fxml_loader = new FXMLLoader(getClass().getResource("main.fxml"));
 
         controller = new Controller(this);
-        /*
-         * eval.setWriteText(System.out::println); int result = load_script(s).eval(null); // TODO here be the normal
-         * text function eval.setWriteText(System.out::println); return result;
-         */
         controller.setStage(primaryStage);
         fxml_loader.setController(controller);
         Parent root = fxml_loader.load();
         root.getStylesheets().add(getClass().getResource("main.css").toString());
 
-        eval = new ScriptEvaluator(this::get_level, this::enter, System.out::println);
+        eval = new ScriptEvaluator(this::get_level, this::enter, this::text);
         loader = new Loader(getClass().getResource("/level/"), getClass().getResource("/img/"), eval);
 
         if (prefs.getBoolean("Preload_Levelsb", false)) preload();
-        
+
         primaryStage.getIcons().add(loader.loadImage("title"));
 
         primaryStage.setTitle("Gilbert's Adventüres");

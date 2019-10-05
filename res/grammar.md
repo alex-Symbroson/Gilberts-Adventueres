@@ -10,7 +10,7 @@
         | while_expr
     ) ;
     var = IDENTIFIER
-        | IDENTIFIER , "." , IDENTIFIER , "." "visible"
+        | IDENTIFIER , "." , IDENTIFIER , "." , "visible"
         | IDENTIFIER , "." , [ IDENTIFIER , "." ] , "state" ;
     if_expr = "if" , "(" , cmp , ")" , cmp , [ "else" , cmp ] ;
     while_expr = "while" , "(" , cmp , ")" , cmp ;
