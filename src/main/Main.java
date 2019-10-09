@@ -87,7 +87,7 @@ public class Main extends Application
 
         IntegerProperty time = new SimpleIntegerProperty(0);
         Timeline write_anim = new Timeline();
-        KeyFrame frame = new KeyFrame(Duration.seconds(0.03), event ->
+        KeyFrame frame = new KeyFrame(Duration.seconds(0.02), event ->
         {
             int t = time.get();
             if (t <= text.length())
